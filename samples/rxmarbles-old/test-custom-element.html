@@ -6,16 +6,38 @@
     <meta name="description" content="Learn, build, and test Rx functions on Observables">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>RxMarbles: Interactive diagrams of Rx Observables</title>
-    <link rel="stylesheet" href="normalize.min.css">
-    <link rel="stylesheet" href="main.css">
-    <script src="modernizr-2.6.2.min.js"></script>
-    <script defer src="CustomElements.js"></script>
-    <script defer src="element.js"></script>
+    <script src="element.js"></script>
+    <script type="text/javascript">
+    Examples["throttleWithMax"] = {
+      category: "Custom",
+      label: "throttleWithMax(5, 10)",
+      inputs: [
+        [ 1, 4, 8, 12, 20, 24, 28, 50 ].map(function (i) { return { d: i, t: i }; }).concat([55])
+      ],
+      apply: function (inputs, scheduler, Rx) {
+        Rx.Observable.prototype.throttleWithMax = function (throttle, maxTime, scheduler) {
+          var s = scheduler || Rx.Scheduler.timeout;
+          return this
+            .publish(function (p) {
+              return p
+                .window(function () {
+                  var throttleTimer = p.debounce(throttle, s);
+                  var timeoutTimer = p.delay(maxTime, s);
+                  return Rx.Observable.amb(throttleTimer, timeoutTimer);
+                })
+                .flatMap(function (w) { return w.takeLast(1); });
+            });
+        };
+
+        return inputs[0].throttleWithMax(5, 10, scheduler);
+      }
+    };
+    </script>
   </head>
   <body>
     <!--[if lt IE 7]>
       <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
     <![endif]-->
-    <rx-marbles key="delay"></rx-marbles>
+    <rx-marbles key="throttleWithMax"></rx-marbles>
   </body>
 </html>
